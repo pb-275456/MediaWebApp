@@ -1,0 +1,72 @@
+﻿@page "/books/details"
+@using Microsoft.EntityFrameworkCore
+@using MediaWebApp.Components
+@inject IDbContextFactory<MediaWebApp.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Book</h2>
+    <hr />
+    @if (book is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+
+            <!-- Image -->
+            <dt class="col-sm-2">Cover</dt>
+            <dd class="col-sm-10">
+                @if (!string.IsNullOrEmpty(book.ImageUrl))
+                {
+                    <img src="@book.ImageUrl"
+                         alt="Cover of @book.Title"
+                         class="img-fluid rounded"
+                         style="max-height: 300px;"
+                         onerror="this.style.display='none'" />
+                }
+                else
+                {
+                    <span class="text-muted">No cover image </span>
+                }
+            </dd>
+
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@book.Title</dd>
+            <dt class="col-sm-2">Author</dt>
+            <dd class="col-sm-10">@book.Author</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@book.Description</dd>
+            <dt class="col-sm-2">RelaseDate</dt>
+            <dd class="col-sm-10">@book.RelaseDate</dd>
+            <dt class="col-sm-2">Rating</dt>
+            <dd class="col-sm-10">@book.Rating</dd>
+        </dl>
+        <div>
+            <a href="@($"/books/edit?id={book.Id}")">Edit</a> |
+            <a href="@($"/books")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Book? book;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        book = await context.Books.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (book is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}
