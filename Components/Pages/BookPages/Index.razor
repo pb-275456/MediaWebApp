@@ -1,10 +1,9 @@
 ﻿@page "/books"
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
-@using MediaWebApp.Components
 @using MediaWebApp.Data
 @implements IAsyncDisposable
-@inject IDbContextFactory<MediaWebApp.Data.ApplicationDbContext> DbFactory
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 <PageTitle>Index</PageTitle>
 
@@ -14,26 +13,37 @@
     <a href="books/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="context.Books">
-    <PropertyColumn Property="book => book.Title" />
-    <PropertyColumn Property="book => book.Author" />
-    <PropertyColumn Property="book => book.RelaseDate" />
-    <PropertyColumn Property="book => book.Rating" />
+<QuickGrid Items="books" Class="table">
+    <PropertyColumn Property="@(b => b.Title)" Sortable="true" />
+    <PropertyColumn Property="@(b => b.Author)" Sortable="true" />
+    <PropertyColumn Property="@(b => b.RelaseDate)" Sortable="true" Format="yyyy-MM-dd" />
+    <PropertyColumn Property="@(b => b.Rating)" Sortable="true" />
 
-    <TemplateColumn Context="book">
-        <a href="@($"books/edit?id={book.Id}")">Edit</a> |
-        <a href="@($"books/details?id={book.Id}")">Details</a> |
-        <a href="@($"books/delete?id={book.Id}")">Delete</a>
+    <TemplateColumn>
+        @{
+            var book = context as Book;
+            <a href="@($"books/edit?id={book?.Id}")">Edit</a> @:|
+            <a href="@($"books/details?id={book?.Id}")">Details</a> @:|
+            <a href="@($"books/delete?id={book?.Id}")">Delete</a>
+        }
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    private IQueryable<Book>? books;
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+        books = context.Books.AsQueryable();
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        if (context != null)
+        {
+            await context.DisposeAsync();
+        }
+    }
 }

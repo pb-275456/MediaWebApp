@@ -1,4 +1,6 @@
 ﻿@page "/books/edit"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using MediaWebApp.Components
 @inject IDbContextFactory<MediaWebApp.Data.ApplicationDbContext> DbFactory
@@ -58,11 +60,6 @@ else
                     }
                 </div>
 
-                <div class="mb-3">
-                    <label for="rate" class="form-label">Rate:</label>
-                    <InputNumber id="rate" @bind-Value="Book.Rating" class="form-control" />
-                    <ValidationMessage For="() => Book.Rating" class="text-danger" />
-                </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
         </div>

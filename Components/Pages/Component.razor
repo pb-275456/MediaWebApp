@@ -1,0 +1,68 @@
+﻿@page "/testrating"
+@using System.ComponentModel.DataAnnotations
+
+<h3>Rate This Book</h3>
+
+<EditForm Model="@ratingModel" OnValidSubmit="@SubmitRating" FormName="test">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="rating">Your Rating (1-10)</label>
+        <InputNumber @bind-Value="ratingModel.Value" TValue="int?" class="form-control" />
+    </div>
+
+    <p class="text-muted">Debug: Value = @(ratingModel.Value?.ToString() ?? "null")</p>
+
+    <button class="btn btn-primary">Submit</button>
+</EditForm>
+
+<div class="alert alert-info mt-3">
+    <strong>Diagnostics</strong><br />
+    Last action: @lastActionMessage<br />
+    Exception: @lastException
+</div>
+
+@code {
+    private RatingModel ratingModel = new RatingModel();
+    private string lastActionMessage = "No actions yet";
+    private string? lastException;
+
+    private async Task SubmitRating()
+    {
+        try
+        {
+            lastException = null;
+
+            // This ensures we are always getting the updated value
+            lastActionMessage = $"Submit started - Value: {ratingModel.Value?.ToString() ?? "null"}";
+
+            if (ratingModel.Value is null)
+            {
+                lastActionMessage = "Value is null";
+                return;
+            }
+
+            if (ratingModel.Value < 1 || ratingModel.Value > 10)
+            {
+                lastActionMessage = "Value out of range";
+                return;
+            }
+
+            // Here is where we update the lastActionMessage on valid submit
+            lastActionMessage = $"Valid value submitted: {ratingModel.Value}";
+        }
+        catch (Exception ex)
+        {
+            lastException = ex.Message;
+            lastActionMessage = "Exception thrown";
+        }
+    }
+
+    public class RatingModel
+    {
+        [Required(ErrorMessage = "Rating is required")]
+        [Range(1, 10, ErrorMessage = "Rating must be between 1 and 10")]
+        public int? Value { get; set; } = null;
+    }
+}

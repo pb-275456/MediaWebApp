@@ -1,4 +1,6 @@
 ﻿@page "/books/delete"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using MediaWebApp.Components
 @inject IDbContextFactory<MediaWebApp.Data.ApplicationDbContext> DbFactory

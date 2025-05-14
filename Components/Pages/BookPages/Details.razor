@@ -1,6 +1,8 @@
 ﻿@page "/books/details"
 @using Microsoft.EntityFrameworkCore
 @using MediaWebApp.Components
+@using System.ComponentModel.DataAnnotations
+@using System.Web
 @inject IDbContextFactory<MediaWebApp.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -24,10 +26,10 @@
                 @if (!string.IsNullOrEmpty(book.ImageUrl))
                 {
                     <img src="@book.ImageUrl"
-                         alt="Cover of @book.Title"
-                         class="img-fluid rounded"
-                         style="max-height: 300px;"
-                         onerror="this.style.display='none'" />
+                    alt="Cover of @book.Title"
+                    class="img-fluid rounded"
+                    style="max-height: 300px;"
+                    onerror="this.style.display='none'" />
                 }
                 else
                 {
@@ -46,6 +48,27 @@
             <dt class="col-sm-2">Rating</dt>
             <dd class="col-sm-10">@book.Rating</dd>
         </dl>
+
+
+        <!-- rating -->
+        <!-- rating form -->
+        <EditForm method="post" Model="@ratingModel" OnValidSubmit="@SubmitRating" FormName="rateBook" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label for="rating" class="form-label">Your Rating (1-10)</label>
+                <InputNumber id="rating" @bind-Value="ratingModel.Value"
+                             class="form-control"
+                             min="1"
+                             max="10" />
+                <ValidationMessage For="@(() => ratingModel.Value)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Rating</button>
+        </EditForm>
+
+     
         <div>
             <a href="@($"/books/edit?id={book.Id}")">Edit</a> |
             <a href="@($"/books")">Back to List</a>
@@ -59,7 +82,15 @@
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
+    [SupplyParameterFromForm]
+    private RatingModel ratingModel { get; set; } = new();
+
     protected override async Task OnInitializedAsync()
+    {
+        await LoadBook();
+    }
+
+    private async Task LoadBook()
     {
         using var context = DbFactory.CreateDbContext();
         book = await context.Books.FirstOrDefaultAsync(m => m.Id == Id);
@@ -68,5 +99,38 @@
         {
             NavigationManager.NavigateTo("notfound");
         }
+    }
+
+    private async Task SubmitRating()
+    {
+        if (book is null || ratingModel.Value < 1 || ratingModel.Value > 10) return;
+
+        using var context = DbFactory.CreateDbContext();
+        var currentBook = await context.Books.FirstOrDefaultAsync(m => m.Id == Id);
+        if (currentBook is null) return;
+
+        float newRating;
+        if (currentBook.TotalRatings == 0)
+        {
+            newRating = ratingModel.Value;
+        }
+        else
+        {
+            float currentTotal = currentBook.Rating * currentBook.TotalRatings;
+            newRating = (currentTotal + ratingModel.Value) / (currentBook.TotalRatings + 1);
+        }
+
+        currentBook.Rating = newRating;
+        currentBook.TotalRatings++;
+
+        await context.SaveChangesAsync();
+        await LoadBook();
+    }
+
+    public class RatingModel
+    {
+        [Required(ErrorMessage = "Rating is required")]
+        [Range(1, 10, ErrorMessage = "Must be between 1-10")]
+        public int Value { get; set; } = 5; // Default value
     }
 }
